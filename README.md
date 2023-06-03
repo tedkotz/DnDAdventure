@@ -26,7 +26,7 @@ Using basic python io I don't have a getkey equivalent so that needs to be solve
 
 ### TODO
 - [x] Base game play
-- [ ] Adding Monsters save/load support
+- [x] Adding Monsters save/load support
 - [ ] replace getkey
 - [ ] clean up UI
 - [ ] Make more table driven so more choices can be made

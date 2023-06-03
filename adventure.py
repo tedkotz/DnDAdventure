@@ -14,10 +14,10 @@ This is a translation of an old DnD game I wrote in qbasic
                            MINDLESS MAYHAM
 
 """
-import os
-import time
-import random
 import json
+import os
+import random
+import time
 
 class Monster:
     def __init__(self):
@@ -244,10 +244,50 @@ def gp_to_level(u):
 def char_ac(u):
     return u.armor_power-(1 if u.shield else 0)
 
+def monster_getfilename( number ):
+    return os.path.join("monsters",chr(63+number)+".mon.json")
+
+def monster_decoder( data ):
+    return_val = Monster()
+    return_val.name    =     data["name"    ]
+    return_val.xp      = int(data["xp"      ])
+    return_val.ac      = int(data["ac"      ])
+    return_val.hd      = int(data["hd"      ])
+    return_val.hp_plus = int(data["hp_plus" ])
+    return_val.damage  = int(data["damage"  ])
+    return_val.dammod  = int(data["dammod"  ])
+    return_val.regen   = int(data["regen"   ])
+    return_val.num_att = int(data["num_att" ])
+    return return_val
+
+
 def save_monsters():
-    pass
+    mon = Monster()
+    a = 1
+    while a==1:
+        a = maybe_int(input("MONSTER NUMBER: "))
+        mon.name = input("\tNAME: ")
+        mon.xp = maybe_int(input("\tXp: "))
+        mon.ac = maybe_int(input("\tAC: "))
+        mon.hd = maybe_int(input("\tHD: "))
+        mon.hp_plus = maybe_int(input("\tHp+: "))
+        mon.regen = maybe_int(input("\tREGENERATION: "))
+        mon.num_att = maybe_int(input("\tATTACKS: "))
+        mon.damage = maybe_int(input("\tDAMAGE: "))
+        mon.dammod = maybe_int(input("\tDAMAGE PLUS: "))
+        with open(monster_getfilename(a), "w") as fout:
+            json.dump(mon.__dict__, fout)
+        a = maybe_int(input("1-AGAIN: "))
 
 def random_monster(u): #before line 12
+    try:
+        a = roll(1, min(10, u.level))
+        #a = 2
+        if 1 < a <= 10:
+            with open(monster_getfilename(a), "r") as fin:
+                return json.load(fin, object_hook=monster_decoder)
+    except Exception as err:
+        print(f"Unexpected {err=}, {type(err)=}")
     return None
 
 def fighter(u):
@@ -429,7 +469,7 @@ def fight(u):
 
 def play(u): # line 5
     way_out =  roll(1,5) #B
-    way_out = 3
+    #way_out = 3
     if u.food < 1:
         print("YOU DIE OF STARVATION")
         return False
@@ -452,7 +492,7 @@ def play(u): # line 5
     if a==way_out:
         print("YOU FOUND THE WAYOUT AND 600Gp")
         u.gp = u.gp + 600
-        a=maybe_int(input("1-BACK INTO CAVES 2-ALONG NEW PATH"))
+        a=maybe_int(input("1-BACK INTO CAVES 2-ALONG NEW PATH: "))
         if a==2:
             print_char(u)
             return False
@@ -539,7 +579,7 @@ def main():
             armorer(you)
         while play(you):
             pass
-        a = maybe_int(input("1-AGAIN 2-END")) # line 20
+        a = maybe_int(input("1-AGAIN 2-END: ")) # line 20
 
 if __name__=="__main__":
     main()
