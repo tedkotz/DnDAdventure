@@ -37,7 +37,7 @@ class Player:
         self.clas = ""         # C$
         self.weapon = ""       # W$ or Wb
         self.armor = ""        # A$ or Ab
-        self.level = 5         # L
+        self.level = 2         # L
         self.co = 1
         self.hpp = 5
         self.food = 30         # Fo
@@ -52,7 +52,7 @@ class Player:
 
 CLASSES = { "FIGHTER"       : (1   , 5),
             "PRIEST"        : (1.25, 4),
-            "MARTIAL ARTIST": (1.5 , 3),
+            "MONK": (1.5 , 3),
             "THIEF"         : (1.75, 3),
             "MAGE"          : (2   , 2) }
 
@@ -145,13 +145,14 @@ def new_char(name): # line 200
         you.armor_power = 8
         you.gp = 600
         you.chi = 10
-    elif you.clas == "MARTIAL ARTIST":
-        you.weapon_power = you.level -2
+    elif you.clas == "MONK":
+        you.weapon="MARTIAL ARTS"
+        you.weapon_power = you.level - 5
         you.armor_power = 11 - you.level
         you.gp = 600
     elif you.clas == "PRIEST":
         you.weapon="QUARTERSTAFF"
-        you.armor="LEATHER"
+        you.armor="HIDE"
         you.weapon_power = -2
         you.armor_power = 6
         you.chi = 5
@@ -241,6 +242,9 @@ def max_hp(u):
 def gp_to_level(u):
     return 2**(u.level-1)*200
 
+def gp_to_rest(u):
+    return u.level * 25
+
 def char_ac(u):
     return u.armor_power-(1 if u.shield else 0)
 
@@ -293,11 +297,11 @@ def random_monster(u): #before line 12
 def fighter(u):
     mon = Monster()
     mon.name = "FIGHTER"
-    mon.xp = u.gp + 200
+    mon.xp = gp_to_level(u) // 10 + gp_to_rest(u)
     mon.ac = 2
     mon.hd = u.level
     mon.hp_plus = 5
-    mon.damage = 10
+    mon.damage = 8
     mon.dammod = 7
     mon.regen = 0
     mon.num_att = 1
@@ -326,20 +330,24 @@ def shape_shift(u):
     damage_taken = max_hp(u) - u.hp
     if form==1:
         print("YOU RETURN TO HUMAN FORM")
+        u.weapon="QUARTERSTAFF"
+        u.armor="HIDE"
         u.weapon_power = -2
         u.armor_power = 6
         u.hpp = 4
         u.hp = max(1, max_hp(u) - damage_taken)
     elif form==2:
         print("YOU ARE NOW A TINY ANT")
+        u.weapon="MANDIBLE"
         u.weapon_power = -8
         u.armor_power = -20
         u.hpp = 0
         u.hp = 1
     elif form==3:
         print("YOU ARE NOW A POWERFUL BEAR")
-        u.weapon_power = 3
-        u.armor_power = 5
+        u.weapon="TOOTH AND CLAW"
+        u.weapon_power = -4
+        u.armor_power = 7
         u.hpp = 6
         damage_taken = 0
         u.hp = max_hp(u)
@@ -349,8 +357,9 @@ def level_up(u):
     u.level = min(100, u.level + 1)
     u.food = u.food - 1
     print("YOU ADVANCE TO {}".format(u.level))
-    if u.clas == "MARTIAL ARTIST":
+    if u.clas == "MONK":
         u.armor_power=max(-10, 11-u.level)
+        u.weapon_power = u.level - 5
 
 def fight(u):
     backstab_mod = 1 # BAK
@@ -429,7 +438,7 @@ def fight(u):
             num_att = 1
             if u.clas=="FIGHTER":
                 num_att = 1 + (u.level // 10)
-            if u.clas=="MARTIAL ARTIST":
+            if u.clas=="MONK":
                 num_att = 1 + (u.level // 5)
             if u.weapon=="DAGGER":
                 num_att = num_att * 2
@@ -446,7 +455,7 @@ def fight(u):
                     mon_hp = mon_hp - dam_roll
         if mon_hp < 1:
             # line 16
-            print ("IT HAS FALLEN")
+            print ("IT HAS FALLEN. YOU WIN {} Gp".format(mon.xp))
             u.gp = u.gp + mon.xp
             u.food = u.food - 1
             return True
@@ -473,11 +482,13 @@ def play(u): # line 5
     if u.food < 1:
         print("YOU DIE OF STARVATION")
         return False
+    if u.food < 5:
+        print("YOU ARE RUNNING LOW ON RATIONS")
     print("THERE ARE 5 CAVES ONE LEADS TO FREEDOM THE REST LEAD TO BATTLE. PICK ONE:")
     print("\t0-CHARACTER")
     print("\t1-5-CAVES")
     if u.hp < max_hp(u):
-        print("\t6-HEAL 500Gp")
+        print("\t6-HEAL {}Gp".format(gp_to_rest(u)))
     if u.level < 100: # something about monks and level 17??
         print("\t7-ADVANCE {}Gp".format(gp_to_level(u)))
     print("\t8-FOOD 5Gp")
@@ -490,8 +501,8 @@ def play(u): # line 5
     print("\t11-SAVE")
     a = maybe_int(input("CHOOSE: "))
     if a==way_out:
-        print("YOU FOUND THE WAYOUT AND 600Gp")
-        u.gp = u.gp + 600
+        print("YOU FOUND THE WAYOUT AND {}Gp".format(gp_to_level(u) // 5))
+        u.gp = u.gp + (gp_to_level(u) // 5)
         a=maybe_int(input("1-BACK INTO CAVES 2-ALONG NEW PATH: "))
         if a==2:
             print_char(u)
@@ -499,14 +510,14 @@ def play(u): # line 5
     elif a==0:
         print_char(u)
     elif a==6:
-        if u.gp >= 500 and u.food > 2:
+        if u.gp >= gp_to_rest(u) and u.food > 2:
             # line 2
-            u.gp = u.gp - 500
+            u.gp = u.gp - gp_to_rest(u)
             u.food = u.food - 2
             if u.clas in ["PRIEST", "MAGE"]:
                 u.chi = u.chi + 1
             u.hp = max_hp(u)
-            print("YOU HEAL UP TO {}".format(u.hp))
+            print("YOU REST AND HEAL UP TO {}".format(u.hp))
     elif a==7:
         if u.gp >= gp_to_level(u) and u.food > 1:
             u.gp = u.gp - gp_to_level(u)
@@ -538,15 +549,13 @@ def print_char( u ): # line 1
     print(u.clas)
     print("STR 18/00              LEVEL={}".format(u.level))
     print("DEX 15                    AC={}".format(char_ac(u)))
-    if u.co == 0:
-        u.co == 1
     print("CON 17                    HP={}/{}".format(u.hp, max_hp(u)))
     print("INT 14                 Thac0={}".format(21-u.level))
     print("WIS 13                    GP={}".format(u.gp))
     print("CHA 15        MAGICAL ENERGY={}".format(u.chi))
     print("EQUIPMENT:")
     if u.weapon != "":
-        print("\t{}".format(u.weapon))
+        print("\t{} (8-{})".format(u.weapon, 15+u.weapon_power))
     if u.armor != "":
         print("\t{}".format(u.armor))
     if u.shield:
@@ -575,7 +584,7 @@ def main():
             return save_monsters()
         else:
             you = new_char(name)
-        if you.clas != "PRIEST":
+        if you.clas in ["FIGHTER",  "THIEF" ]:
             armorer(you)
         while play(you):
             pass
