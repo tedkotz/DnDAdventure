@@ -1,1 +1,1 @@
-{"name": "ZOMBIE", "xp": 65, "ac": 7, "hd": 2, "hp_plus": 0, "damage": 6, "dammod": 0, "regen": 1, "num_att": 1}
+{"name": "ZOMBIE", "gp": 65, "ac": 7, "level": 2, "hp_plus": 0, "damage": 6, "dammod": 0, "regen": 1, "num_att": 1}

@@ -30,9 +30,10 @@ Using basic python io I don't have a getkey equivalent so that needs to be solve
 - [ ] replace getkey
 - [ ] clean up UI
 - [ ] Make more table driven so more choices can be made
-- [ ] Replace Martial Artist with Monk
+- [x] Replace Martial Artist with Monk
 - [ ] make pylint like it
 - [ ] get OCR copy of the original printout in this repo
-- [ ] Add some monsters
+- [x] Add some monsters
+- [ ] Add option to quit after save
 
 

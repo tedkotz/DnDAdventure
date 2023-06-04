@@ -19,55 +19,101 @@ import os
 import random
 import time
 
+CLASSES = { "FIGHTER"       : (1   , 8, 5),
+            "PRIEST"        : (1.25, 6, 4),
+            "MONK"          : (1.5 , 6, 3),
+            "THIEF"         : (1.75, 5, 3),
+            "MAGE"          : (2   , 4, 2) }
+
+WEAPONS = [ ("DAGGER"          ,  4,  2, False),
+            ("SHORT SWORD"     ,  6,  5, False),
+            ("BATTLE AX"       ,  8, 10, False),
+            ("LONG SWORD"      , 10, 22, False),
+            ("TWO HANDED SWORD", 14, 50, True ) ]
+
+
+ARMOR = [ ("CHAINMAIL"       ,  4,   75),
+          ("BRONZEPLATEMAIL" ,  3,  225),
+          ("PLATEMAIL"       ,  2,  700),
+          ("FIELD PLATEMAIL" ,  1, 2000),
+          ("FULL PLATEMAIL"  ,  0, 6000) ]
+
+FORMS = { "HUMAN" : (1),
+          "ANT"   : (2),
+          "BEAR"  : (3) }
+
 class Monster:
     def __init__(self):
-        self.name = ""  # Mb
-        self.xp= 0      # K
-        self.ac = 0     # AC
-        self.hd = 0     # HD
-        self.hp_plus= 0 # P
-        self.damage= 0  # D
-        self.dammod = 0 # Dp
-        self.regen= 0   # R
-        self.num_att= 0 # MA
+        self.name = ""          # Mb
+        self.role = "MONSTER"   # C$
+        self.gp = 0             # K
+        self.ac = 0             # AC
+        self.level = 0          # HD
+        self.hp_plus = 0        # P
+        self.regen = 0          # R
+        self.num_att = 0        # MA
+        self.damage = 0         # D
+        self.dammod = 0         # Dp
+        self.hp = 1             # M
+
+def monster_decoder( data ):
+    return_val = Monster()
+    return_val.name    =     data["name"    ]
+    return_val.role    = "MONSTER"
+    return_val.gp      = int(data["gp"      ])
+    return_val.ac      = int(data["ac"      ])
+    return_val.level   = int(data["level"   ])
+    return_val.hp_plus = int(data["hp_plus" ])
+    return_val.regen   = int(data["regen"   ])
+    return_val.num_att = int(data["num_att" ])
+    return_val.damage  = int(data["damage"  ])
+    return_val.dammod  = int(data["dammod"  ])
+    return_val.hp      = return_val.level * 8 + return_val.hp_plus
+    return return_val
 
 class Player:
     def __init__(self):
         self.name = ""         # N$
-        self.clas = ""         # C$
-        self.weapon = ""       # W$ or Wb
-        self.armor = ""        # A$ or Ab
+        self.role = ""         # C$
+        self.gp = 0            # G
+        self.ac = 10           # ap
         self.level = 2         # L
-        self.co = 1
-        self.hpp = 5
+        self.hp_plus = 2
+        self.regen = 0
+        self.num_att = 1       # ATT
+        self.damage = 2        # WP
+        self.dammod = 2        # WP
+        self.hp = 1            # H
+        self.armor = ""        # A$ or Ab
+        self.weapon = ""       # W$ or Wb
+        self.chi = 1           # CH
         self.food = 30         # Fo
-        self.gp = 700          # G
-        self.hp = 1            #H
-        self.chi = 1           #CH
-        self.shield = False    # S
-        self.armor_power = -5  # ap
-        self.weapon_power = -8 # WP
         self.form = 1          # FORM (1-human, 2-ant, 3-bear)
+        self.hpp = 5
+        self.shield = False    # S
 
+def char_decoder( data ):
+    return_val=Player()
+    return_val.name    =     data["name"    ]
+    return_val.role    =     data["role"    ]
+    return_val.gp      = int(data["gp"      ])
+    return_val.ac      = int(data["ac"      ])
+    return_val.level   = int(data["level"   ])
+    return_val.hp_plus = int(data["hp_plus" ])
+    return_val.regen   = int(data["regen"   ])
+    return_val.num_att = int(data["num_att" ])
+    return_val.damage  = int(data["damage"  ])
+    return_val.dammod  = int(data["dammod"  ])
+    return_val.hp      = int(data["hp"      ])
+    return_val.armor   =     data["armor"   ]
+    return_val.weapon  =     data["weapon"  ]
+    return_val.chi     = int(data["chi"     ])
+    return_val.food    = int(data["food"    ])
+    return_val.form    =      data["form"   ]
+    return_val.hpp     = int(data["hpp"     ])
+    return_val.shield  =bool(data["shield"  ])
+    return return_val
 
-CLASSES = { "FIGHTER"       : (1   , 5),
-            "PRIEST"        : (1.25, 4),
-            "MONK": (1.5 , 3),
-            "THIEF"         : (1.75, 3),
-            "MAGE"          : (2   , 2) }
-
-WEAPONS = [ ("DAGGER"          , -4,  3, False),
-            ("QUARTERSTAFF"    , -2,  6, True ),
-            ("BATTLE AX"       ,  0, 12, False),
-            ("LONG SWORD"      ,  2, 24, False),
-            ("TWO HANDED SWORD",  4, 48, True ) ]
-
-
-ARMOR = [ ("CHAINMAIL"       ,  3,   75),
-          ("BRONZEPLATEMAIL" ,  2,  400),
-          ("PLATEMAIL"       ,  1, 1000),
-          ("FIELD PLATEMAIL" ,  0, 2000),
-          ("FULL PLATEMAIL"  , -1, 7000) ]
 
 def maybe_int(x):
     try:
@@ -128,57 +174,120 @@ def Story():
         print()
     input("        [PRESS ENTER TO CONTINUE]")
 
+def max_hp(u):
+    # u.level * (u.hpp) + u.hp_plus
+    return u.level * (u.hpp + u.hp_plus) + u.hpp
+
+def gp_to_level(u):
+    return 2**(u.level-1)*200
+
+def level_up(u):
+    # line 3
+    u.level = min(100, u.level + 1)
+    u.hp = u.hp + u.hpp + u.hp_plus
+    print("YOU ARE LEVEL {}".format(u.level))
+    if u.role == "FIGHTER":
+        u.num_att = 1 + (u.level // 7)
+    elif u.role == "MONK":
+        u.num_att = 2 + (u.level // 7)
+        u.ac=max(-10, 11-((u.level + 1) // 2))
+        u.damage = 2 + (u.level // 2)
+
 def new_char(name): # line 200
     you = Player()
     you.name = name
     print("CLASSES:")
     for cl in CLASSES:
         print("\t{}".format(cl))
-    while you.clas not in CLASSES:
-        you.clas = input("WHAT IS YOUR CLASS: ").upper()
-    you.co=CLASSES[you.clas][0]
-    you.hpp=CLASSES[you.clas][1]
-    you.hp = max_hp(you)
-    if you.clas == "MAGE":
+    while you.role not in CLASSES:
+        you.role = input("WHAT IS YOUR CLASS: ").upper()
+    you.hpp = CLASSES[you.role][1]
+    you.hp_plus = CLASSES[you.role][2]
+    if you.role == "MAGE":
+        you.gp = 10
         you.weapon="DAGGER"
-        you.weapon_power = -4
-        you.armor_power = 8
-        you.gp = 600
+        you.damage = 4
+        you.ac = 8
         you.chi = 10
-    elif you.clas == "MONK":
+    elif you.role == "MONK":
+        you.gp = 10
         you.weapon="MARTIAL ARTS"
-        you.weapon_power = you.level - 5
-        you.armor_power = 11 - you.level
-        you.gp = 600
-    elif you.clas == "PRIEST":
+        you.dammod = 5 # Fighter Strength + Specialization
+        you.ac = 11 - you.level
+        you.hp_plus = 3
+    elif you.role == "PRIEST":
+        you.gp = 10
         you.weapon="QUARTERSTAFF"
+        you.damage = 6
         you.armor="HIDE"
-        you.weapon_power = -2
-        you.armor_power = 6
+        you.ac = 5
         you.chi = 5
-    elif you.clas == "THIEF":
+    elif you.role == "THIEF":
+        you.gp = 20
         you.armor="LEATHER"
-        you.armor_power = 8
+        you.ac = 7
+    elif you.role == "FIGHTER":
+        you.gp = 250
+        you.hp_plus = 3
+        you.dammod = 5 # Fighter Strength + Specialization
+    you.level = 1
+    # level up to perform any level up cleanups
+    level_up(you)
+    you.hp = max_hp(you)
     return you
 
-def char_decoder( d ):
-    return_val=Player()
-    return_val.name         = d["name"         ]
-    return_val.clas         = d["clas"         ]
-    return_val.weapon       = d["weapon"       ]
-    return_val.armor        = d["armor"        ]
-    return_val.level        = d["level"        ]
-    return_val.co           = d["co"           ]
-    return_val.hpp          = d["hpp"          ]
-    return_val.food         = d["food"         ]
-    return_val.gp           = d["gp"           ]
-    return_val.hp           = d["hp"           ]
-    return_val.chi          = d["chi"          ]
-    return_val.shield       = d["shield"       ]
-    return_val.armor_power  = d["armor_power"  ]
-    return_val.weapon_power = d["weapon_power" ]
-    return_val.form         = d["form"         ]
-    return return_val
+def shape_shift(u):
+    form = None
+    while form not in range(1,4) or form > (u.chi + 1) :
+        form = maybe_int(input("1-HUMAN 2-ANT 3-BEAR: "))
+    u.form = form
+    u.chi = u.chi + 1 - form
+    damage_taken = max_hp(u) - u.hp
+    if form==1:
+        print("YOU RETURN TO HUMAN FORM")
+        u.weapon="QUARTERSTAFF"
+        u.num_att = 1
+        u.damage = 6
+        u.dammod = 2
+        u.armor="HIDE"
+        u.ac = 5
+        u.hpp = 6
+        u.hp_plus = 4
+        u.hp = max(1, max_hp(u) - damage_taken)
+    elif form==2:
+        print("YOU ARE NOW A TINY ANT")
+        u.weapon="MANDIBLE"
+        u.num_att = 1
+        u.damage = 3
+        u.dammod = -1
+        u.ac = -11 - u.level
+        u.hpp = 0
+        u.hp_plus = 1
+        u.hp = 1
+    elif form==3:
+        print("YOU ARE NOW A POWERFUL BEAR")
+        u.weapon="TOOTH AND CLAW"
+        u.num_att = 3
+        u.damage = 8
+        u.dammod = 3
+        u.ac = 6
+        u.hpp = 7
+        u.hp_plus = 4
+        u.hp = max_hp(u)
+
+def fighter(u):
+    mon = Monster()
+    mon.name = "FIGHTER"
+    mon.gp = gp_to_level(u) // 10 + gp_to_rest(u)
+    mon.ac = 2
+    mon.level = u.level
+    mon.hp_plus = 5 + (2 * u.level)
+    mon.damage = 8
+    mon.dammod = 3
+    mon.regen = 0
+    mon.num_att = 1 + (u.level // 7)
+    return mon
+
 
 def load_char(): # line 70
     name = input("WHAT IS YOUR NAME: ")
@@ -192,16 +301,13 @@ def save_char(u):
 def armorer(u): # line 42
     print( "WELCOME STRANGER" )
     A = 0
-    while A != 4 or u.armor_power < -3 or u.weapon_power < -6:
+    while A != 4 or u.ac >= 10 or u.damage < 4:
         print("YOU HAVE {}Gp".format(u.gp))
-        print("1-DAGGER             3Gp   1-CHAINMAIL          75Gp")
-        print("2-QUARTERSTAFF       6Gp   2-BRONZEPLATEMAIL   400Gp")
-        print("3-BATTLE AX         12Gp   3-PLATEMAIL        1000Gp")
-        print("4-LONG SWORD        24Gp   4-FIELD PLATEMAIL  2000Gp")
-        print("5-TWO HANDED SWORD  48Gp   5-FULL PLATEMAIL   7000Gp")
+        for i in range(5):
+            print(f"{i+1}-{WEAPONS[i][0]:16} {WEAPONS[i][2]:-3}Gp   {i+1}-{ARMOR[i][0]:15} {ARMOR[i][2]:-5}Gp")
         A = maybe_int(input("1-WEAPON 2-ARMOR 3-SHIELD 10Gp 4-LEAVE: "))
         if A==1:
-            if u.clas=="PRIEST":
+            if u.role=="PRIEST":
                 print("PRIEST CAN ONLY USE THE QUARTERSTAFF")
             else:
                 w = maybe_int(input("WHAT IS YOUR WEAPON: "))
@@ -209,12 +315,12 @@ def armorer(u): # line 42
                     weapon = WEAPONS[w-1]
                     if u.gp >= weapon[2] and not (u.shield and weapon[3]):
                         u.weapon=weapon[0]
-                        u.weapon_power=weapon[1]
+                        u.damage=weapon[1]
                         u.gp = u.gp - weapon[2]
                         # Add refund
                         print("{} PURCHASED".format(weapon[0]))
         elif A==2:
-            if u.clas=="THIEF":
+            if u.role=="THIEF":
                 print("THIEF CAN ONLY WEAR LEATHER ARMOR")
             else:
                 ar = maybe_int(input("WHAT IS YOUR ARMOR: "))
@@ -222,7 +328,7 @@ def armorer(u): # line 42
                     armor = ARMOR[ar-1]
                     if u.gp >= armor[2]:
                         u.armor=armor[0]
-                        u.armor_power=armor[1]
+                        u.ac=armor[1]
                         u.gp = u.gp - armor[2]
                         # Add refund
                         print("{} PURCHASED".format(armor[0]))
@@ -236,34 +342,21 @@ def armorer(u): # line 42
                 u.gp=u.gp-10
                 print("SHIELD PURCHASED")
 
-def max_hp(u):
-    return u.level * (u.hpp + 3) + u.hpp
-
-def gp_to_level(u):
-    return 2**(u.level-1)*200
-
 def gp_to_rest(u):
     return u.level * 25
 
 def char_ac(u):
-    return u.armor_power-(1 if u.shield else 0)
+    return u.ac-(1 if u.shield else 0)
+
+def char_thac0(u):
+    if u.role in ["FIGHTER", "MONK"]:
+        # 1 better strength modifier, +1 Weapon Spec
+        return 18 - (u.level // CLASSES[u.role][0])
+    return 20 - (u.level // CLASSES[u.role][0])
+
 
 def monster_getfilename( number ):
     return os.path.join("monsters",chr(63+number)+".mon.json")
-
-def monster_decoder( data ):
-    return_val = Monster()
-    return_val.name    =     data["name"    ]
-    return_val.xp      = int(data["xp"      ])
-    return_val.ac      = int(data["ac"      ])
-    return_val.hd      = int(data["hd"      ])
-    return_val.hp_plus = int(data["hp_plus" ])
-    return_val.damage  = int(data["damage"  ])
-    return_val.dammod  = int(data["dammod"  ])
-    return_val.regen   = int(data["regen"   ])
-    return_val.num_att = int(data["num_att" ])
-    return return_val
-
 
 def save_monsters():
     mon = Monster()
@@ -271,9 +364,9 @@ def save_monsters():
     while a==1:
         a = maybe_int(input("MONSTER NUMBER: "))
         mon.name = input("\tNAME: ")
-        mon.xp = maybe_int(input("\tXp: "))
+        mon.gp = maybe_int(input("\tXp: "))
         mon.ac = maybe_int(input("\tAC: "))
-        mon.hd = maybe_int(input("\tHD: "))
+        mon.level = maybe_int(input("\tHD: "))
         mon.hp_plus = maybe_int(input("\tHp+: "))
         mon.regen = maybe_int(input("\tREGENERATION: "))
         mon.num_att = maybe_int(input("\tATTACKS: "))
@@ -294,19 +387,6 @@ def random_monster(u): #before line 12
         print(f"Unexpected {err=}, {type(err)=}")
     return None
 
-def fighter(u):
-    mon = Monster()
-    mon.name = "FIGHTER"
-    mon.xp = gp_to_level(u) // 10 + gp_to_rest(u)
-    mon.ac = 2
-    mon.hd = u.level
-    mon.hp_plus = 5
-    mon.damage = 8
-    mon.dammod = 7
-    mon.regen = 0
-    mon.num_att = 1
-    return mon
-
 def fireball(u, save):
     print(u.chi)
     a = -1
@@ -321,46 +401,6 @@ def fireball(u, save):
     print("IT TAKES {} POINTS OF DAMAGE".format(damage))
     return damage
 
-def shape_shift(u):
-    form = None
-    while form not in range(1,4) or form > (u.chi + 1) :
-        form = maybe_int(input("1-HUMAN 2-ANT 3-BEAR: "))
-    u.form = form
-    u.chi = u.chi + 1 - form
-    damage_taken = max_hp(u) - u.hp
-    if form==1:
-        print("YOU RETURN TO HUMAN FORM")
-        u.weapon="QUARTERSTAFF"
-        u.armor="HIDE"
-        u.weapon_power = -2
-        u.armor_power = 6
-        u.hpp = 4
-        u.hp = max(1, max_hp(u) - damage_taken)
-    elif form==2:
-        print("YOU ARE NOW A TINY ANT")
-        u.weapon="MANDIBLE"
-        u.weapon_power = -8
-        u.armor_power = -20
-        u.hpp = 0
-        u.hp = 1
-    elif form==3:
-        print("YOU ARE NOW A POWERFUL BEAR")
-        u.weapon="TOOTH AND CLAW"
-        u.weapon_power = -4
-        u.armor_power = 7
-        u.hpp = 6
-        damage_taken = 0
-        u.hp = max_hp(u)
-
-def level_up(u):
-    # line 3
-    u.level = min(100, u.level + 1)
-    u.food = u.food - 1
-    print("YOU ADVANCE TO {}".format(u.level))
-    if u.clas == "MONK":
-        u.armor_power=max(-10, 11-u.level)
-        u.weapon_power = u.level - 5
-
 def fight(u):
     backstab_mod = 1 # BAK
     #Try reading a monster from a file
@@ -371,20 +411,20 @@ def fight(u):
         print("YOU ARE ATTACKED BY AN {}".format(mon.name))
     else:
         print("YOU ARE ATTACKED BY A {}".format(mon.name))
-    mon_hp = roll( mon.hd, 8 ) + mon.hp_plus
+    mon.hp = roll( mon.level, 8 ) + mon.hp_plus
     options = "1-ATTACK 2-RUN "
-    if u.clas=="MAGE":
+    if u.role=="MAGE":
         options += "3-MAGIC"
-    if u.clas=="PRIEST":
+    if u.role=="PRIEST":
         options += "3-SHAPE SHIFT 4-TURN EVIL"
-    if u.clas=="THIEF":
+    if u.role=="THIEF":
         options += "3-SCROLL 4-BACKSTAB"
     while True:
         print(options)
         b = maybe_int(input(": "))
         if b==2:
             print("IT GETS A FINAL ATTACK")
-        elif b==3 and u.clas=="MAGE":
+        elif b==3 and u.role=="MAGE":
             if u.chi<1:
                 print("YOU HAVE NO CHARGES. RECOVER ONE")
                 u.chi = u.chi + 1
@@ -395,78 +435,75 @@ def fight(u):
                     b = maybe_int(input("1-FIREBALL 2-TELEPORT 3-STEALTH 4-SLEEP: "))
                 u.chi = u.chi + 1 - b
                 if b==1:
-                    mon_hp -= fireball(u, 17 - mon.hd)
+                    mon.hp -= fireball(u, 17 - mon.level)
                 elif b==2:
                     print("YOU TELEPORT AWAY")
                     return True
                 elif b==3:
                     print("YOU ARE HIDDEN")
-                    backstab_mod = 1 + u.level // 4
+                    backstab_mod = 2
                     continue # skip monster attacks you are hidden
                 elif b==4:
-                    save = 19 - mon.hd
+                    save = 19 - mon.level
                     if roll(1,20) > save:
                         print("IT SAVES")
                     else:
-                        mon_hp=0
-        elif b==3 and u.clas=="PRIEST":
+                        mon.hp=0
+        elif b==3 and u.role=="PRIEST":
             shape_shift(u)
             if u.form == 2:
                 print("AS AN ANT YOU SNEAK AWAY")
                 return True
-        elif b==3 and u.clas=="THIEF":
+        elif b==3 and u.role=="THIEF":
             if u.chi<1:
                 print("YOU HAVE NO CHARGES")
             else:
-                mon_hp -= fireball(u, 17 - mon.hd)
-        elif b==4 and u.clas=="PRIEST":
+                mon.hp -= fireball(u, 17 - mon.level)
+        elif b==4 and u.role=="PRIEST":
             if u.form != 1:
                 print("YOU MUST BE IN HUMAN FORM TO TURN EVIL")
             else:
-                save = 19 - mon.hd
+                save = 19 - mon.level
                 if roll(1,20) > save:
                     print("IT SAVES")
                 else:
-                    mon_hp=0
-        elif b==4 and u.clas=="THIEF":
+                    mon.hp=0
+        elif b==4 and u.role=="THIEF":
             # line 80
             if roll(1,100) <= 10 + u.level * 5:
                 print("YOU ARE HIDDEN")
-                backstab_mod = 1 + u.level // 4
+                backstab_mod = 2 + ((u.level-1) // 4)
                 continue # skip monster attacks you are hidden
         else:
-            num_att = 1
-            if u.clas=="FIGHTER":
-                num_att = 1 + (u.level // 10)
-            if u.clas=="MONK":
-                num_att = 1 + (u.level // 5)
-            if u.weapon=="DAGGER":
-                num_att = num_att * 2
-            if u.form==3:
-                num_att = 3
+            num_att = u.num_att
+            if u.weapon=="DAGGER" and not u.shield:
+                num_att = num_att + 1
             for _ in range(num_att):
-                attack_roll = roll(1,20) + 5 + backstab_mod
-                if attack_roll < 21 - (u.level/u.co) - mon.ac:
-                    print("YOU MISS")
+                attack_roll = roll(1,20)
+                if attack_roll < char_thac0(u) - mon.ac - backstab_mod:
+                    print(f"{attack_roll:2}: YOU MISS")
                 else:
-                    dam_roll = (roll(1,8+u.weapon_power)+7)*backstab_mod
+                    if attack_roll == 20:
+                        attack_roll = "!!! CRITCAL HIT !!!"
+                        backstab_mod = backstab_mod + 1
+                    dam_roll = (roll(1,u.damage) + u.dammod)*backstab_mod
                     backstab_mod = 1
-                    print("YOU HIT FOR {} POINTS OF DAMAGE".format(dam_roll))
-                    mon_hp = mon_hp - dam_roll
-        if mon_hp < 1:
+                    print(f"{attack_roll:2}: YOU HIT FOR {dam_roll} POINTS OF DAMAGE")
+                    mon.hp = mon.hp - dam_roll
+        if mon.hp < 1:
             # line 16
-            print ("IT HAS FALLEN. YOU WIN {} Gp".format(mon.xp))
-            u.gp = u.gp + mon.xp
+            print ("IT HAS FALLEN. YOU WIN {} Gp".format(mon.gp))
+            u.gp = u.gp + mon.gp
             u.food = u.food - 1
             return True
-        mon_hp = mon_hp + mon.regen
+        mon.hp = mon.hp + mon.regen
         for _ in range(mon.num_att):
-            attack_roll = roll(1,20)
-            if attack_roll < 21 - mon.hd - char_ac(u):
-                print("IT MISSES")
+            attack_roll = roll(1,19)
+            if attack_roll < 20 - mon.level - char_ac(u):
+                print(f"{attack_roll:2}: IT MISSES")
             else:
                 dam_roll = roll(1,mon.damage) + mon.dammod
-                print("IT HITS FOR {} POINTS OF DAMAGE".format(dam_roll))
+                print(f"{attack_roll:2}: IT HITS FOR {dam_roll} POINTS OF DAMAGE")
                 u.hp = u.hp - dam_roll
                 if u.hp < 1:
                     # line 18
@@ -492,11 +529,11 @@ def play(u): # line 5
     if u.level < 100: # something about monks and level 17??
         print("\t7-ADVANCE {}Gp".format(gp_to_level(u)))
     print("\t8-FOOD 5Gp")
-    if u.clas in ["PRIEST",  "THIEF", "MAGE" ]:
+    if u.role in ["PRIEST",  "THIEF", "MAGE" ]:
         print("\t9-MAGIC, SHAPE SHIFT, SCROLLS 100Gp")
-    if u.clas in ["FIGHTER",  "THIEF" ]:
+    if u.role in ["FIGHTER",  "THIEF" ]:
         print("\t10-ARMORER")
-    if u.clas == "PRIEST":
+    if u.role == "PRIEST":
         print("\t10-SHAPE SHIFT")
     print("\t11-SAVE")
     a = maybe_int(input("CHOOSE: "))
@@ -514,13 +551,14 @@ def play(u): # line 5
             # line 2
             u.gp = u.gp - gp_to_rest(u)
             u.food = u.food - 2
-            if u.clas in ["PRIEST", "MAGE"]:
+            if u.role in ["PRIEST", "MAGE"]:
                 u.chi = u.chi + 1
             u.hp = max_hp(u)
             print("YOU REST AND HEAL UP TO {}".format(u.hp))
     elif a==7:
         if u.gp >= gp_to_level(u) and u.food > 1:
             u.gp = u.gp - gp_to_level(u)
+            u.food = u.food - 1
             level_up(u)
     elif a==8:
         if u.gp >= 5:
@@ -528,14 +566,14 @@ def play(u): # line 5
             u.food = u.food + 1
             print("FOOD={}".format(u.food))
     elif a==9:
-        if u.gp >= 100 and u.clas!="FIGHTER":
+        if u.gp >= 100 and u.role!="FIGHTER":
             u.gp = u.gp - 100
             u.chi = u.chi + 1
             print("MAGICAL ENERGY={}".format(u.chi))
     elif a==10:
-        if u.clas=="PRIEST":
+        if u.role=="PRIEST":
             shape_shift(u)
-        elif u.clas in ["FIGHTER",  "THIEF" ]:
+        elif u.role in ["FIGHTER",  "THIEF" ]:
             armorer(u)
     elif a==11:
         save_char(u)
@@ -546,36 +584,42 @@ def play(u): # line 5
 def print_char( u ): # line 1
     print("\n\n")
     print(u.name)
-    print(u.clas)
-    print("STR 18/00              LEVEL={}".format(u.level))
+    print(u.role)
+    if u.role in ["FIGHTER", "MONK"]:
+        print("STR 18/70              LEVEL={}".format(u.level))
+    else:
+        print("STR 18                 LEVEL={}".format(u.level))
     print("DEX 15                    AC={}".format(char_ac(u)))
     print("CON 17                    HP={}/{}".format(u.hp, max_hp(u)))
     print("INT 14                 Thac0={}".format(21-u.level))
     print("WIS 13                    GP={}".format(u.gp))
     print("CHA 15        MAGICAL ENERGY={}".format(u.chi))
-    print("EQUIPMENT:")
-    if u.weapon != "":
-        print("\t{} (8-{})".format(u.weapon, 15+u.weapon_power))
-    if u.armor != "":
-        print("\t{}".format(u.armor))
-    if u.shield:
-        print("\tSHIELD")
-    print("\tBACKPACK")
-    if u.clas == "MAGE":
-        print("\tSPELL BOOK")
-    if u.clas == "PRIEST":
-        print("\tHOLY SYMBOL")
-    if u.clas == "THIEF":
-        print("\tTHIEVES TOOLS")
-    print("\tLANTERN")
-    print("\t{} FOOD RATIONS".format(u.food))
-    print("\t50' ROPE")
+    if u.form != 1:
+        print(f"\t{u.weapon} ({u.dammod+1}-{u.dammod+u.damage})")
+    else:
+        print("EQUIPMENT:")
+        if u.weapon != "":
+            print(f"\t{u.weapon} ({u.dammod+1}-{u.dammod+u.damage})")
+        if u.armor != "":
+            print("\t{}".format(u.armor))
+        if u.shield:
+            print("\tSHIELD")
+        print("\tBACKPACK")
+        if u.role == "MAGE":
+            print("\tSPELL BOOK")
+        if u.role == "PRIEST":
+            print("\tHOLY SYMBOL")
+        if u.role == "THIEF":
+            print("\tTHIEVES TOOLS")
+        print("\tLANTERN")
+        print("\t{} FOOD RATIONS".format(u.food))
+        print("\t50' ROPE")
 
 def main():
+    Intro()
+    #Story()
     a=0
     while a!=2:
-        Intro()
-        #Story()
         Clear()
         name = input("WHAT IS YOUR NAME (NO SPACES)(TYPE 'LOAD' TO GET SAVED GAME): ")
         if name == "LOAD":
@@ -584,10 +628,11 @@ def main():
             return save_monsters()
         else:
             you = new_char(name)
-        if you.clas in ["FIGHTER",  "THIEF" ]:
+        if you.role in ["FIGHTER",  "THIEF" ]:
             armorer(you)
         while play(you):
             pass
+        print_char(you)
         a = maybe_int(input("1-AGAIN 2-END: ")) # line 20
 
 if __name__=="__main__":

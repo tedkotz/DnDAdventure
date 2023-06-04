@@ -1,1 +1,1 @@
-{"name": "GOBLIN", "xp": 15, "ac": 6, "hd": 1, "hp_plus": 0, "damage": 6, "dammod": 0, "regen": 0, "num_att": 1}
+{"name": "GOBLIN", "gp": 15, "ac": 6, "level": 1, "hp_plus": 0, "damage": 6, "dammod": 0, "regen": 0, "num_att": 1}
