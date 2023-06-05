@@ -192,6 +192,8 @@ def level_up(u):
         u.num_att = 2 + (u.level // 7)
         u.ac=max(-10, 11-((u.level + 1) // 2))
         u.damage = 2 + (u.level // 2)
+    elif u.role == "MAGE":
+        u.chi = u.chi + u.level
 
 def new_char(name): # line 200
     you = Player()
@@ -387,18 +389,22 @@ def random_monster(u): #before line 12
         print(f"Unexpected {err=}, {type(err)=}")
     return None
 
-def fireball(u, save):
-    print(u.chi)
+def fireball(u, mon):
+    chi_limit = min(u.chi, 1 + (u.level // 5))
+    print(f"YOU HAVE {u.chi} CHARGES, YOU CAN SPEND {chi_limit}")
     a = -1
-    while a<1 or a>u.chi or a>(u.level*2):
+    while a<1 or a>chi_limit:
         a = maybe_int(input("HOW MANY CHARGES: "))
     u.chi = u.chi - a
-    damage = roll( 6*a, 4)
+    damage = roll( 5*a, 6)
+    save = 17 - mon.level
     if save < 3:
         save = 3
-    if roll(1,20) >= save:
+    save_roll = roll(1,20)
+    if save_roll >= save:
+        print(f"{save_roll:2}: THE {mon.name} SAVES")
         damage = damage / 2
-    print("IT TAKES {} POINTS OF DAMAGE".format(damage))
+    print(f"THE {mon.name} TAKES {damage} POINTS OF DAMAGE")
     return damage
 
 def fight(u):
@@ -423,7 +429,7 @@ def fight(u):
         print(options)
         b = maybe_int(input(": "))
         if b==2:
-            print("IT GETS A FINAL ATTACK")
+            print(f"THE {mon.name} GETS A FINAL ATTACK")
         elif b==3 and u.role=="MAGE":
             if u.chi<1:
                 print("YOU HAVE NO CHARGES. RECOVER ONE")
@@ -435,7 +441,7 @@ def fight(u):
                     b = maybe_int(input("1-FIREBALL 2-TELEPORT 3-STEALTH 4-SLEEP: "))
                 u.chi = u.chi + 1 - b
                 if b==1:
-                    mon.hp -= fireball(u, 17 - mon.level)
+                    mon.hp -= fireball(u, mon)
                 elif b==2:
                     print("YOU TELEPORT AWAY")
                     return True
@@ -445,8 +451,9 @@ def fight(u):
                     continue # skip monster attacks you are hidden
                 elif b==4:
                     save = 19 - mon.level
-                    if roll(1,20) > save:
-                        print("IT SAVES")
+                    save_roll = roll(1,20)
+                    if save_roll > save:
+                        print(f"{save_roll:2}: THE {mon.name} SAVES")
                     else:
                         mon.hp=0
         elif b==3 and u.role=="PRIEST":
@@ -458,14 +465,15 @@ def fight(u):
             if u.chi<1:
                 print("YOU HAVE NO CHARGES")
             else:
-                mon.hp -= fireball(u, 17 - mon.level)
+                mon.hp -= fireball(u, mon)
         elif b==4 and u.role=="PRIEST":
             if u.form != 1:
                 print("YOU MUST BE IN HUMAN FORM TO TURN EVIL")
             else:
                 save = 19 - mon.level
-                if roll(1,20) > save:
-                    print("IT SAVES")
+                save_roll = roll(1,20)
+                if save_roll > save:
+                    print(f"{save_roll:2}: THE {mon.name} SAVES")
                 else:
                     mon.hp=0
         elif b==4 and u.role=="THIEF":
@@ -492,7 +500,7 @@ def fight(u):
                     mon.hp = mon.hp - dam_roll
         if mon.hp < 1:
             # line 16
-            print ("IT HAS FALLEN. YOU WIN {} Gp".format(mon.gp))
+            print (f"THE {mon.name} HAS FALLEN. YOU WIN {mon.gp}Gp.")
             u.gp = u.gp + mon.gp
             u.food = u.food - 1
             return True
@@ -500,10 +508,10 @@ def fight(u):
         for _ in range(mon.num_att):
             attack_roll = roll(1,19)
             if attack_roll < 20 - mon.level - char_ac(u):
-                print(f"{attack_roll:2}: IT MISSES")
+                print(f"{attack_roll:2}: THE {mon.name} MISSES")
             else:
                 dam_roll = roll(1,mon.damage) + mon.dammod
-                print(f"{attack_roll:2}: IT HITS FOR {dam_roll} POINTS OF DAMAGE")
+                print(f"{attack_roll:2}: THE {mon.name} HITS FOR {dam_roll} POINTS OF DAMAGE")
                 u.hp = u.hp - dam_roll
                 if u.hp < 1:
                     # line 18
