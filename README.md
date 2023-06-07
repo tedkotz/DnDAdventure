@@ -34,6 +34,6 @@ Using basic python io I don't have a getkey equivalent so that needs to be solve
 - [ ] make pylint like it
 - [ ] get OCR copy of the original printout in this repo
 - [x] Add some monsters
-- [ ] Add option to quit after save
+- [x] Add option to quit after save
 
 

@@ -548,7 +548,9 @@ def play(u): # line 5
     if a==way_out:
         print("YOU FOUND THE WAYOUT AND {}Gp".format(gp_to_level(u) // 5))
         u.gp = u.gp + (gp_to_level(u) // 5)
-        a=maybe_int(input("1-BACK INTO CAVES 2-ALONG NEW PATH: "))
+        a=0
+        while a<1 or a>2:
+            a=maybe_int(input("1-BACK INTO CAVES 2-ALONG NEW PATH: "))
         if a==2:
             print_char(u)
             return False
@@ -585,6 +587,12 @@ def play(u): # line 5
             armorer(u)
     elif a==11:
         save_char(u)
+        print(f"{u.name} SAVED")
+        a=0
+        while a<1 or a>2:
+            a=maybe_int(input("1-CONTINUE 2-QUIT: "))
+        if a==2:
+            return False
     elif a in range(1,6):
         return fight(u)
     return True
@@ -641,7 +649,7 @@ def main():
         while play(you):
             pass
         print_char(you)
-        a = maybe_int(input("1-AGAIN 2-END: ")) # line 20
+        a = maybe_int(input("1-NEW GAME 2-EXIT: ")) # line 20
 
 if __name__=="__main__":
     main()
