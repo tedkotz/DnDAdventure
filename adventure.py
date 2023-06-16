@@ -301,7 +301,7 @@ def save_char(u):
         json.dump(u.__dict__, fout)
 
 def armorer(u): # line 42
-    print( "WELCOME STRANGER" )
+    print(f"WELCOME TO MY SHOP, {u.name}")
     A = 0
     while A != 4 or u.ac >= 10 or u.damage < 4:
         print("YOU HAVE {}Gp".format(u.gp))
@@ -598,7 +598,7 @@ def play(u): # line 5
     return True
 
 def print_char( u ): # line 1
-    print("\n\n")
+    print("\n")
     print(u.name)
     print(u.role)
     if u.role in ["FIGHTER", "MONK"]:
