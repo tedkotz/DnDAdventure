@@ -45,6 +45,10 @@ Using basic python io I don't have a getkey equivalent so that needs to be solve
 - [ ] Have monsters that can level up?
 - [ ] Add End of Game Story
 - [ ] Add End of Game Encounter
+- [ ] Add Damage Level descriptors (Undamaged, Wounded, Bloodied, Critical)
+- [ ] Add Final Hit mechanic
+- [ ] Error Handling when hero name not found in saves.
+- [ ] Randomize fighter's level with adjective to cover range.(level +1 - 1d4)
 
 
 
