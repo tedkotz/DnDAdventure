@@ -1,1 +1,1 @@
-{"name": "WIZARD", "role": "MAGE", "gp": 395, "ac": 8, "level": 2, "hp_plus": 2, "regen": 0, "num_att": 1, "damage": 4, "dammod": 2, "hp": 9, "armor": "", "weapon": "DAGGER", "chi": 10, "food": 25, "form": 1, "hpp": 4, "shield": false}
+{"name": "WIZARD", "role": "MAGE", "gp": 360, "ac": 8, "level": 2, "hp_plus": 2, "regen": 0, "num_att": 1, "damage": 4, "dammod": 2, "hp": 16, "armor": "", "weapon": "DAGGER", "chi": 11, "food": 22, "form": 1, "hpp": 4, "shield": false}

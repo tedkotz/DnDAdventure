@@ -18,6 +18,35 @@ import json
 import os
 import random
 import time
+import sys
+
+try:
+    import prompt_toolkit
+    from prompt_toolkit.key_binding import KeyBindings
+    from prompt_toolkit.key_binding.key_processor import KeyPressEvent
+    from prompt_toolkit import prompt
+    from prompt_toolkit.shortcuts import clear as Clear
+
+    bindings = KeyBindings()
+
+    @bindings.add('<any>')
+    def _(event: KeyPressEvent):
+        event.app.current_buffer.insert_text(event.key_sequence[0].data)
+        event.app.current_buffer.validate_and_handle()
+
+    def get_key( prompt_string ):
+        return prompt(prompt_string, key_bindings=bindings)
+
+except ImportError:
+    def get_key( prompt_string ):
+        return input(prompt_string)
+
+    def Clear():
+        """Clears screen."""
+        if os.system('cls || clear') != 0:
+            print('\n' * 100)
+
+
 
 CLASSES = { "FIGHTER"       : (1   , 8, 5),
             "PRIEST"        : (1.25, 6, 4),
@@ -121,16 +150,11 @@ def maybe_int(x):
     except:
         return None
 
-def roll(n, d):
-    t = 0
-    for _ in range(n):
-        t=t+random.randrange(d)+1
-    return t
-
-def Clear():
-    """Clears screen."""
-    if os.system('cls || clear') != 0:
-        print('\n' * 100)
+def roll(number_of_dice, dice, modifier=0):
+    total = number_of_dice + modifier
+    for _ in range(number_of_dice):
+        total=total+random.randrange(dice)
+    return total
 
 def Intro():
     # WIDTH 40,25
@@ -141,38 +165,38 @@ def Intro():
     print("        THE TARASQUE'S EVIL")
     for _ in range(11):
         print()
-    #print("        [HIT ANY KEY TO CONTINUE]")
-    input("        [PRESS ENTER TO CONTINUE]")
-    #play song missing whole line
+    get_key("        [PRESS ENTER TO CONTINUE]")
+    #play song - missing whole line
 
-def Pause():
-    time.sleep(1)
+def Story(u):
+    def Pause():
+        time.sleep(0.5)
+        print()
+        time.sleep(0.5)
 
-def Story():
-    for _ in range(100):
+    # Locate 25, 1 ; start as bottom of screen so story slowly scrolls in
+    print("\n" * 100)
+    print("THE EVIL TARASQUE HAS KIDNAPPED THE PRINCESS IDA NOE.")
+    Pause()
+    print("ON YOUR QUEST TO SAVE HER...")
+    Pause()
+    print("YOU FOUND YOURSELF TRAPPED IN A MAGICAL MAZE.")
+    Pause()
+    print("YOU ARE THE LAST SERVANT OF THE KING...")
+    Pause()
+    print("LEFT TO SAVE THE PRINCESS.")
+    Pause()
+    print("YOU MUST SUCCEED, AND...")
+    Pause()
+    print("YOU NOW FEEL THE END IS NEAR.")
+    Pause()
+    print()
+    Pause()
+    print(f"GOOD LUCK! BRAVE {u.name}.")
+    for _ in range(3):
+        Pause()
         print()
-    # Locate 25, 1
-    print("THE EVIL TARASQUE HAS KIDNAPPED THE")
-    Pause()
-    print("PRINCESS IDA NOE. ON YOUR QUEST TO")
-    Pause()
-    print("SAVE HER YOU FOUND YOURSELF TRAPPED IN")
-    Pause()
-    print("A MAGICAL MAZE.  YOU ARE THE LAST")
-    Pause()
-    print("SERVANT OF THE KING LEFT TO SAVE THE")
-    Pause()
-    print("PRINCESS.  YOU MUST SUCCEED, AND YOU")
-    Pause()
-    print("FEEL THE END IS NEAR.")
-    Pause()
-    print("GOOD LUCK BRAVE SOUL.")
-    for _ in range(15):
-        #Pause()
-        # if keypressed:
-        #     return
-        print()
-    input("        [PRESS ENTER TO CONTINUE]")
+    get_key("        [PRESS ENTER TO CONTINUE]")
 
 def max_hp(u):
     # u.level * (u.hpp) + u.hp_plus
@@ -545,6 +569,7 @@ def play(u): # line 5
         print("\t10-SHAPE SHIFT")
     print("\t11-SAVE")
     a = maybe_int(input("CHOOSE: "))
+    print()
     if a==way_out:
         print("YOU FOUND THE WAYOUT AND {}Gp".format(gp_to_level(u) // 5))
         u.gp = u.gp + (gp_to_level(u) // 5)
@@ -632,8 +657,8 @@ def print_char( u ): # line 1
         print("\t50' ROPE")
 
 def main():
+    random.seed()
     Intro()
-    #Story()
     a=0
     while a!=2:
         Clear()
@@ -646,6 +671,7 @@ def main():
             you = new_char(name)
         if you.role in ["FIGHTER",  "THIEF" ]:
             armorer(you)
+        Story(you)
         while play(you):
             pass
         print_char(you)
