@@ -197,13 +197,14 @@ def Story(u):
         Pause()
         print()
     get_key("        [PRESS ENTER TO CONTINUE]")
+    Clear()
 
 def max_hp(u):
     # u.level * (u.hpp) + u.hp_plus
     return u.level * (u.hpp + u.hp_plus) + u.hpp
 
 def gp_to_level(u):
-    return 2**(u.level-1)*200
+    return int(2**(u.level-3)*625)
 
 def level_up(u):
     # line 3
@@ -259,6 +260,7 @@ def new_char(name): # line 200
     you.level = 1
     # level up to perform any level up cleanups
     level_up(you)
+    you.gp = you.gp + gp_to_rest(you)
     you.hp = max_hp(you)
     return you
 
@@ -304,7 +306,7 @@ def shape_shift(u):
 def fighter(u):
     mon = Monster()
     mon.name = "FIGHTER"
-    mon.gp = gp_to_level(u) // 10 + gp_to_rest(u)
+    mon.gp = (gp_to_level(u) // (5+u.level)) + gp_to_rest(u)
     mon.ac = 2
     mon.level = u.level
     mon.hp_plus = 5 + (2 * u.level)
@@ -571,13 +573,15 @@ def play(u): # line 5
     a = maybe_int(input("CHOOSE: "))
     print()
     if a==way_out:
-        print("YOU FOUND THE WAYOUT AND {}Gp".format(gp_to_level(u) // 5))
-        u.gp = u.gp + (gp_to_level(u) // 5)
-        a=0
-        while a<1 or a>2:
+        treasure = (gp_to_level(u) // (5+u.level))*2
+        print("YOU FOUND THE WAYOUT AND A TREASURE HOARD OF {}Gp".format(treasure))
+        u.gp = u.gp + (treasure)
+        a=None
+        while a is None or a<1 or a>2:
             a=maybe_int(input("1-BACK INTO CAVES 2-ALONG NEW PATH: "))
         if a==2:
-            print_char(u)
+            print("\nAFTER A HARROWING JOURNEY YOU RESCUE THE PRINCESS AND\n LIVE HAPPILY EVER AFTER!!!")
+            get_key("        [PRESS ENTER TO CONTINUE]")
             return False
     elif a==0:
         print_char(u)
@@ -619,7 +623,10 @@ def play(u): # line 5
         if a==2:
             return False
     elif a in range(1,6):
-        return fight(u)
+        return_val = fight(u)
+        get_key("        [PRESS ENTER TO CONTINUE]")
+        Clear()
+        return return_val
     return True
 
 def print_char( u ): # line 1

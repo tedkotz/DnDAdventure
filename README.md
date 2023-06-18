@@ -35,5 +35,17 @@ Using basic python io I don't have a getkey equivalent so that needs to be solve
 - [ ] get OCR copy of the original printout in this repo
 - [x] Add some monsters
 - [x] Add option to quit after save
+- [ ] Make better encounter table (normal or Zipf distribution, level based, more monsters)
+- [x] Modify advancement Table to be based off of a power of 5 (125 or 625)
+- [ ] Make Monster treasure awards more random (50% -> 200%)
+- [ ] Give monsters each a special action
+- [ ] Maybe move monsters into the program instead of support file
+- [ ] Make enemy fighter cooler
+- [ ] Print attack types
+- [ ] Have monsters that can level up?
+- [ ] Add End of Game Story
+- [ ] Add End of Game Encounter
+
+
 
 
